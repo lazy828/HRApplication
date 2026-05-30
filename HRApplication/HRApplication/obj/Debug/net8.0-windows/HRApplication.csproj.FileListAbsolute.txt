@@ -14,3 +14,5 @@ D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\refint\
 D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.pdb
 D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.genruntimeconfig.cache
 D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\ref\HRApplication.dll
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.ProcessSelectorForm.resources
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.sourcelink.json
