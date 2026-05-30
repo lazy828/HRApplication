@@ -1,0 +1,16 @@
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\bin\Debug\net8.0-windows\HRApplication.exe
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\bin\Debug\net8.0-windows\HRApplication.deps.json
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\bin\Debug\net8.0-windows\HRApplication.runtimeconfig.json
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\bin\Debug\net8.0-windows\HRApplication.dll
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\bin\Debug\net8.0-windows\HRApplication.pdb
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.Form1.resources
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.csproj.GenerateResource.cache
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.GeneratedMSBuildEditorConfig.editorconfig
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.AssemblyInfoInputs.cache
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.AssemblyInfo.cs
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.csproj.CoreCompileInputs.cache
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.dll
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\refint\HRApplication.dll
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.pdb
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\HRApplication.genruntimeconfig.cache
+D:\Kevin\Repo\HRApp\HRApplication\HRApplication\obj\Debug\net8.0-windows\ref\HRApplication.dll
