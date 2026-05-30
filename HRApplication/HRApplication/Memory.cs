@@ -81,6 +81,27 @@ public class Memory
         return WriteProcessMemory(processHandle, address, value, value.Length, out _);
     }
 
+    public bool WriteMemoryWithProtection(IntPtr address, byte[] value)
+    {
+        try
+        {
+            // Change memory protection to writable
+            uint oldProtect;
+            VirtualProtectEx(processHandle, address, (uint)value.Length, 0x40, out oldProtect); // PAGE_EXECUTE_READWRITE
+
+            bool result = WriteProcessMemory(processHandle, address, value, value.Length, out _);
+
+            // Restore original protection
+            VirtualProtectEx(processHandle, address, (uint)value.Length, oldProtect, out _);
+
+            return result;
+        }
+        catch { return false; }
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flNewProtect, out uint lpflOldProtect);
+
     // Value Scanner
     public IntPtr FindValue(int valueToFind, long startAddress = 0x00400000, long maxSize = 0x8000000)
     {
@@ -107,42 +128,68 @@ public class Memory
     }
 
     // String Scanner (ASCII + Unicode)
-    public List<IntPtr> FindAllStrings(string textToFind, long startAddress = 0x00400000, long maxSize = 0x8000000)
+    public List<IntPtr> FindAllStrings(string textToFind)
     {
         List<IntPtr> results = new List<IntPtr>();
-        byte[] buffer = new byte[0x100000];
+        byte[] buffer = new byte[0x200000]; // 2MB chunks
+
         byte[] asciiBytes = Encoding.ASCII.GetBytes(textToFind);
         byte[] unicodeBytes = Encoding.Unicode.GetBytes(textToFind);
 
         try
         {
-            for (long i = 0; i < maxSize; i += buffer.Length)
+            IntPtr address = IntPtr.Zero;
+            MEMORY_BASIC_INFORMATION mbi = new MEMORY_BASIC_INFORMATION();
+
+            while (VirtualQuery(address, out mbi, Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) != 0)
             {
-                IntPtr current = (IntPtr)(startAddress + i);
-                if (!ReadProcessMemory(processHandle, current, buffer, buffer.Length, out _))
-                    continue;
-
-                for (int j = 0; j < buffer.Length - asciiBytes.Length; j++)
+                if (mbi.State == 0x1000) // Committed memory
                 {
-                    bool match = true;
-                    for (int k = 0; k < asciiBytes.Length; k++)
-                    {
-                        if (buffer[j + k] != asciiBytes[k]) { match = false; break; }
-                    }
-                    if (match)
-                    {
-                        results.Add((IntPtr)(current.ToInt64() + j));
-                        continue;
-                    }
+                    long regionSize = mbi.RegionSize.ToInt64();
+                    long current = mbi.BaseAddress.ToInt64();
 
-                    match = true;
-                    for (int k = 0; k < unicodeBytes.Length; k++)
+                    for (long i = 0; i < regionSize; i += buffer.Length)
                     {
-                        if (buffer[j + k] != unicodeBytes[k]) { match = false; break; }
+                        IntPtr currAddr = new IntPtr(current + i);
+
+                        if (!ReadProcessMemory(processHandle, currAddr, buffer, buffer.Length, out _))
+                            continue;
+
+                        for (int j = 0; j < buffer.Length - Math.Max(asciiBytes.Length, unicodeBytes.Length); j++)
+                        {
+                            // Check ASCII
+                            bool asciiMatch = true;
+                            for (int k = 0; k < asciiBytes.Length; k++)
+                            {
+                                if (buffer[j + k] != asciiBytes[k])
+                                {
+                                    asciiMatch = false;
+                                    break;
+                                }
+                            }
+                            if (asciiMatch)
+                            {
+                                results.Add(new IntPtr(currAddr.ToInt64() + j));
+                                continue;
+                            }
+
+                            // Check Unicode
+                            bool unicodeMatch = true;
+                            for (int k = 0; k < unicodeBytes.Length; k++)
+                            {
+                                if (buffer[j + k] != unicodeBytes[k])
+                                {
+                                    unicodeMatch = false;
+                                    break;
+                                }
+                            }
+                            if (unicodeMatch)
+                                results.Add(new IntPtr(currAddr.ToInt64() + j));
+                        }
                     }
-                    if (match)
-                        results.Add((IntPtr)(current.ToInt64() + j));
                 }
+
+                address = new IntPtr(mbi.BaseAddress.ToInt64() + mbi.RegionSize.ToInt64());
             }
         }
         catch { }

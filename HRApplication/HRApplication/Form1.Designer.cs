@@ -42,6 +42,10 @@
             listMemoryView = new ListBox();
             label1 = new Label();
             txtStringScan = new TextBox();
+            lblMemorySearch = new Label();
+            txtMemorySearch = new TextBox();
+            btnMemorySearch = new Button();
+            chkExactSearch = new CheckBox();
             SuspendLayout();
             // 
             // lblProcess
@@ -223,13 +227,13 @@
             listResults.ItemHeight = 15;
             listResults.Location = new Point(20, 250);
             listResults.Name = "listResults";
-            listResults.Size = new Size(510, 139);
+            listResults.Size = new Size(570, 109);
             listResults.TabIndex = 20;
             listResults.DoubleClick += listResults_DoubleClick;
             // 
             // btnStringScan
             // 
-            btnStringScan.Location = new Point(272, 407);
+            btnStringScan.Location = new Point(272, 367);
             btnStringScan.Name = "btnStringScan";
             btnStringScan.Size = new Size(120, 35);
             btnStringScan.TabIndex = 21;
@@ -239,16 +243,16 @@
             // listStringResults
             // 
             listStringResults.ItemHeight = 15;
-            listStringResults.Location = new Point(20, 448);
+            listStringResults.Location = new Point(20, 408);
             listStringResults.Name = "listStringResults";
-            listStringResults.Size = new Size(510, 124);
+            listStringResults.Size = new Size(570, 124);
             listStringResults.TabIndex = 22;
             listStringResults.DoubleClick += listStringResults_DoubleClick;
             // 
             // lblMemoryView
             // 
             lblMemoryView.AutoSize = true;
-            lblMemoryView.Location = new Point(20, 582);
+            lblMemoryView.Location = new Point(642, 53);
             lblMemoryView.Name = "lblMemoryView";
             lblMemoryView.Size = new Size(185, 15);
             lblMemoryView.TabIndex = 23;
@@ -257,15 +261,17 @@
             // listMemoryView
             // 
             listMemoryView.ItemHeight = 15;
-            listMemoryView.Location = new Point(20, 607);
+            listMemoryView.Location = new Point(642, 78);
             listMemoryView.Name = "listMemoryView";
-            listMemoryView.Size = new Size(510, 154);
+            listMemoryView.SelectionMode = SelectionMode.MultiExtended;
+            listMemoryView.Size = new Size(974, 454);
             listMemoryView.TabIndex = 24;
+            listMemoryView.DoubleClick += listMemoryView_DoubleClick;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(20, 417);
+            label1.Location = new Point(20, 377);
             label1.Name = "label1";
             label1.Size = new Size(84, 15);
             label1.TabIndex = 25;
@@ -273,16 +279,55 @@
             // 
             // txtStringScan
             // 
-            txtStringScan.Location = new Point(120, 414);
+            txtStringScan.Location = new Point(120, 374);
             txtStringScan.Name = "txtStringScan";
             txtStringScan.Size = new Size(130, 23);
             txtStringScan.TabIndex = 26;
+            // 
+            // lblMemorySearch
+            // 
+            lblMemorySearch.AutoSize = true;
+            lblMemorySearch.Location = new Point(642, 19);
+            lblMemorySearch.Name = "lblMemorySearch";
+            lblMemorySearch.Size = new Size(84, 15);
+            lblMemorySearch.TabIndex = 28;
+            lblMemorySearch.Text = "Scan for Value:";
+            // 
+            // txtMemorySearch
+            // 
+            txtMemorySearch.Location = new Point(742, 16);
+            txtMemorySearch.Name = "txtMemorySearch";
+            txtMemorySearch.Size = new Size(130, 23);
+            txtMemorySearch.TabIndex = 29;
+            // 
+            // btnMemorySearch
+            // 
+            btnMemorySearch.Location = new Point(962, 9);
+            btnMemorySearch.Name = "btnMemorySearch";
+            btnMemorySearch.Size = new Size(120, 35);
+            btnMemorySearch.TabIndex = 27;
+            btnMemorySearch.Text = "Memory Search";
+            btnMemorySearch.Click += btnMemorySearch_Click;
+            // 
+            // chkExactSearch
+            // 
+            chkExactSearch.AutoSize = true;
+            chkExactSearch.Location = new Point(882, 20);
+            chkExactSearch.Name = "chkExactSearch";
+            chkExactSearch.Size = new Size(84, 19);
+            chkExactSearch.TabIndex = 30;
+            chkExactSearch.Text = "Exact Value";
+            chkExactSearch.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(714, 791);
+            ClientSize = new Size(1637, 564);
+            Controls.Add(chkExactSearch);
+            Controls.Add(lblMemorySearch);
+            Controls.Add(txtMemorySearch);
+            Controls.Add(btnMemorySearch);
             Controls.Add(label1);
             Controls.Add(txtStringScan);
             Controls.Add(lblProcess);
@@ -351,5 +396,9 @@
         private System.Windows.Forms.ListBox listMemoryView;
         private Label label1;
         private TextBox txtStringScan;
+        private Label lblMemorySearch;
+        private TextBox txtMemorySearch;
+        private Button btnMemorySearch;
+        private CheckBox chkExactSearch;
     }
 }

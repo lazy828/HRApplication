@@ -201,7 +201,8 @@ namespace HRApplication
 
         private void btnScan_Click(object sender, EventArgs e)
         {
-            if (!long.TryParse(txtScanValue.Text, out long value))
+            if (!long.TryParse(txtScanValue.Text, out long value) &&
+                !float.TryParse(txtScanValue.Text, out _))
             {
                 MessageBox.Show("Please enter a valid number.");
                 return;
@@ -210,29 +211,20 @@ namespace HRApplication
             bool useFloat = cmbValueType.SelectedItem?.ToString() == "Float";
 
             listResults.Items.Clear();
-            listResults.Items.Add("Starting scan using VirtualQuery (like Cheat Engine)...");
+            listResults.Items.Add("Starting First Scan...");
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                scanResults = mem.FindAllValues(value, useFloat);
+                scanResults = mem.FindAllValues(value, useFloat);   // This must update the class field
 
                 this.Invoke(new Action(() =>
                 {
                     listResults.Items.Clear();
+                    listResults.Items.Add($"First Scan Complete - Found {scanResults.Count} results");
 
-                    if (scanResults.Count == 0)
+                    foreach (var addr in scanResults.Take(50))
                     {
-                        listResults.Items.Add("Scan Complete - Found 0 results");
-                        listResults.Items.Add("Try changing Type to Float / Int32");
-                    }
-                    else
-                    {
-                        listResults.Items.Add($"✅ Scan Complete - Found {scanResults.Count} results");
-
-                        foreach (var addr in scanResults.Take(50))
-                        {
-                            listResults.Items.Add($"0x{addr.ToString("X16")}");
-                        }
+                        listResults.Items.Add($"0x{addr.ToString("X16")}");
                     }
                 }));
             });
@@ -242,17 +234,12 @@ namespace HRApplication
         {
             if (scanResults.Count == 0)
             {
-                MessageBox.Show("Please perform a First Scan first.", "Info");
+                MessageBox.Show("Please do a First Scan first.", "Info");
                 return;
             }
 
-            if (!long.TryParse(txtScanValue.Text, out long newValue))
-            {
-                MessageBox.Show("Please enter the new value for Next Scan.");
-                return;
-            }
-
-            string selectedType = cmbValueType.SelectedItem?.ToString() ?? "Int32";
+            bool useFloat = cmbValueType.SelectedItem?.ToString() == "Float";
+            string input = txtScanValue.Text.Trim();
 
             listResults.Items.Clear();
             listResults.Items.Add("Performing Next Scan...");
@@ -267,17 +254,23 @@ namespace HRApplication
                     {
                         bool match = false;
 
-                        if (selectedType == "Float")
+                        if (useFloat)
                         {
-                            float currentValue = BitConverter.ToSingle(mem.ReadMemory(addr, 4), 0);
-                            if (Math.Abs(currentValue - newValue) < 5.0f)
-                                match = true;
+                            if (float.TryParse(input, out float newFloatValue))
+                            {
+                                float current = BitConverter.ToSingle(mem.ReadMemory(addr, 4), 0);
+                                if (Math.Abs(current - newFloatValue) < 5.0f)
+                                    match = true;
+                            }
                         }
-                        else // Int32 or others
+                        else
                         {
-                            int currentValue = BitConverter.ToInt32(mem.ReadMemory(addr, 4), 0);
-                            if (currentValue == newValue)
-                                match = true;
+                            if (long.TryParse(input, out long newIntValue))
+                            {
+                                int current = BitConverter.ToInt32(mem.ReadMemory(addr, 4), 0);
+                                if (current == newIntValue)
+                                    match = true;
+                            }
                         }
 
                         if (match)
@@ -315,11 +308,12 @@ namespace HRApplication
         {
             if (string.IsNullOrWhiteSpace(txtStringScan.Text))
             {
-                MessageBox.Show("Please enter your character name.");
+                MessageBox.Show("Please enter text to search (e.g. your character name).");
                 return;
             }
 
             string searchText = txtStringScan.Text.Trim();
+
             listStringResults.Items.Clear();
             listStringResults.Items.Add($"Searching for '{searchText}'...");
 
@@ -333,16 +327,15 @@ namespace HRApplication
 
                     if (results.Count == 0)
                     {
-                        listStringResults.Items.Add("No results found.");
+                        listStringResults.Items.Add("No matching strings found.");
                     }
                     else
                     {
-                        listStringResults.Items.Add($"Found {results.Count} result(s) for '{searchText}':");
-                        listStringResults.Items.Add("────────────────────────────────");
+                        listStringResults.Items.Add($"Found {results.Count} results for '{searchText}'");
 
                         foreach (var addr in results)
                         {
-                            listStringResults.Items.Add($"0x{addr.ToString("X8")}");
+                            listStringResults.Items.Add($"0x{addr.ToString("X16")}");
                         }
                     }
                 }));
@@ -374,22 +367,28 @@ namespace HRApplication
             try
             {
                 byte[] bytes;
+                int size;
+
                 switch (type)
                 {
                     case "Int32":
                         bytes = BitConverter.GetBytes(int.Parse(input));
+                        size = 4;
                         break;
                     case "Float":
                         bytes = BitConverter.GetBytes(float.Parse(input));
-                        break;
-                    case "Double":
-                        bytes = BitConverter.GetBytes(double.Parse(input));
+                        size = 4;
                         break;
                     default:
                         return false;
                 }
 
-                return mem.WriteMemory(address, bytes);
+                // Try normal write first
+                if (mem.WriteMemory(address, bytes))
+                    return true;
+
+                // If failed, try changing memory protection
+                return mem.WriteMemoryWithProtection(address, bytes);
             }
             catch
             {
@@ -416,17 +415,18 @@ namespace HRApplication
         {
             if (listStringResults.SelectedItem == null) return;
 
-            string line = listStringResults.SelectedItem.ToString();
+            string selectedLine = listStringResults.SelectedItem.ToString();
 
-            if (line.Contains("0x"))
+            if (selectedLine.Contains("0x"))
             {
-                string addressStr = line.Trim();
-                txtAddress.Text = addressStr;
+                string addressStr = selectedLine.Split(new string[] { "0x" }, StringSplitOptions.None)[1]
+                                               .Trim().Split(' ')[0];
 
-                // Show memory around the selected address
-                ShowMemoryAround(addressStr);
+                txtAddress.Text = "0x" + addressStr;
 
-                MessageBox.Show($"Address loaded: {addressStr}\n\nCheck 'Memory around selected address' below.", "Success");
+                ShowMemoryAround("0x" + addressStr);
+
+                MessageBox.Show($"✅ Address copied: 0x{addressStr}\nMemory viewer updated.", "Success");
             }
         }
 
@@ -439,32 +439,112 @@ namespace HRApplication
             {
                 IntPtr baseAddr = new IntPtr(Convert.ToInt64(hexAddress.Replace("0x", ""), 16));
 
-                listMemoryView.Items.Add($"Memory dump around {hexAddress}:");
-                listMemoryView.Items.Add("────────────────────────────────");
+                listMemoryView.Items.Add($"=== Memory around {hexAddress} ===");
 
-                for (int i = -0x80; i <= 0x180; i += 4)
+                for (int i = -0x100; i <= 0x200; i += 4)
                 {
                     IntPtr addr = new IntPtr(baseAddr.ToInt64() + i);
                     byte[] data = mem.ReadMemory(addr, 4);
-                    int value = BitConverter.ToInt32(data, 0);
+                    int intValue = BitConverter.ToInt32(data, 0);
+                    float floatValue = BitConverter.ToSingle(data, 0);
 
-                    listMemoryView.Items.Add($"0x{addr.ToString("X8")}  =  {value}");
+                    string offset = i >= 0 ? $"+{i:X}" : $"{i:X}";
+
+                    string note = "";
+
+                    // Auto detect possible stats
+                    if (intValue > 0 && intValue < 10000) note = " [Possible HP / Stat]";
+                    else if (intValue > 10000 && intValue < 100000000) note = " [Possible Gold / EXP]";
+                    else if (floatValue > 0.1f && floatValue < 500f) note = " [Possible Speed / ASPD]";
+
+                    listMemoryView.Items.Add($"0x{addr.ToString("X16")}  {offset.PadRight(8)} = {intValue,8} (F:{floatValue:F2}){note}");
                 }
-
-                var sb = new System.Text.StringBuilder();
-
-                foreach (var item in listMemoryView.Items)
-                {
-                    sb.AppendLine(item.ToString());
-                    // Or use string.Join to get subitems like in the previous example
-                }
-
-                string allValues = sb.ToString();
             }
             catch (Exception ex)
             {
                 listMemoryView.Items.Add("Error reading memory: " + ex.Message);
             }
+        }
+
+        private void listMemoryView_DoubleClick(object sender, EventArgs e)
+        {
+            if (listMemoryView.SelectedItem == null) return;
+
+            string selectedLine = listMemoryView.SelectedItem.ToString();
+
+            // Extract address from line (example: 0x00007FF612345678)
+            if (selectedLine.Contains("0x"))
+            {
+                string addrStr = selectedLine.Split(new string[] { "0x" }, StringSplitOptions.None)[1]
+                                            .Split(' ')[0];
+
+                txtAddress.Text = "0x" + addrStr;
+
+                MessageBox.Show($"Address loaded: 0x{addrStr}\nNow enter new value and click Write or Freeze.", "Address Loaded");
+            }
+        }
+
+        private void btnMemorySearch_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtMemorySearch.Text))
+            {
+                MessageBox.Show("Please enter a value to search.");
+                return;
+            }
+
+            string searchText = txtMemorySearch.Text.Trim();
+            bool exactOnly = chkExactSearch.Checked;
+
+            List<int> matchingIndices = new List<int>();
+
+            for (int i = 0; i < listMemoryView.Items.Count; i++)
+            {
+                string line = listMemoryView.Items[i].ToString();
+
+                bool isMatch = false;
+
+                if (exactOnly)
+                {
+                    // Look for exact number match after "=" 
+                    if (line.Contains(" = " + searchText) ||
+                        line.Contains("=" + searchText) ||
+                        line.Contains(searchText + " (F:"))
+                    {
+                        isMatch = true;
+                    }
+                }
+                else
+                {
+                    // Partial match (normal search)
+                    if (line.ToLower().Contains(searchText.ToLower()))
+                    {
+                        isMatch = true;
+                    }
+                }
+
+                if (isMatch)
+                {
+                    matchingIndices.Add(i);
+                }
+            }
+
+            if (matchingIndices.Count == 0)
+            {
+                MessageBox.Show($"No matches found for '{searchText}'", "Search Result");
+                return;
+            }
+
+            // Select all matches
+            listMemoryView.ClearSelected();
+            foreach (int index in matchingIndices)
+            {
+                listMemoryView.SetSelected(index, true);
+            }
+
+            MessageBox.Show($"Found {matchingIndices.Count} match(es) for '{searchText}'",
+                            "Search Result",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
         }
     }
 }
